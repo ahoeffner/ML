@@ -1,15 +1,14 @@
+import math
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 
 
 class Data :
 	def __init__(self, path: str) :
 		self.load(path)
 		self.prepare()
+		self.liniearRegression()
 
-		X ,Y = self.getTrainingData()
-		print(X)
-		print(Y)	
 
 
 	def prepare(self) :
@@ -27,6 +26,20 @@ class Data :
 			elif (row["job_id"] == "SNRCONS") : self.df.at[i,"job"] = 8
 
 			self.split()
+
+
+
+	def liniearRegression(self) :
+		X_test, y_test = self.getTestData()
+		X_train, y_train = self.getTrainingData()
+
+		model = LinearRegression()
+		model.fit(X_train, y_train)
+		y_pred = model.predict(X_test)
+
+		for i in range(len(y_pred)) :
+			print(y_test.iloc[i,0],round(y_pred[i][0],2))
+
 
 
 	def load(self,path:str) :
