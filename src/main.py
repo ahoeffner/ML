@@ -1,5 +1,5 @@
-import math
 import pandas as pd
+from sklearn.metrics import r2_score
 from sklearn.linear_model import LinearRegression
 
 
@@ -13,19 +13,24 @@ class Data :
 
 	def prepare(self) :
 		today = pd.to_datetime("today")
+
+		self.df["CEO"] = 0
+		self.df["MGR"] = 0
+		self.df["CMGR"] = 0
+		self.df["SNRMGR"] = 0
+
+		self.df["TSC"] = 0
+		self.df["CONS"] = 0
+		self.df["SNRTSC"] = 0
+		self.df["SNRCONS"] = 0
+
 		self.df["tenure"] = (today - self.df["hire_date"]).dt.days / 365
 
 		for i,row in self.df.iterrows() :
-			if (row["job_id"] == "CEO") : self.df.at[i,"job"] = 1
-			elif (row["job_id"] == "TSC") :	self.df.at[i,"job"] = 2
-			elif (row["job_id"] == "MGR") :	self.df.at[i,"job"] = 3
-			elif (row["job_id"] == "CMGR") : self.df.at[i,"job"] = 4
-			elif (row["job_id"] == "CONS") : self.df.at[i,"job"] = 5
-			elif (row["job_id"] == "SNRMGR") :	self.df.at[i,"job"] = 6
-			elif (row["job_id"] == "SNRTSC") :	self.df.at[i,"job"] = 7
-			elif (row["job_id"] == "SNRCONS") : self.df.at[i,"job"] = 8
+			self.df.at[i,row["job_id"]] = 1
+			self.df.at[i,"noise"] = 0*len(self.df.at[i,"first_name"])
 
-			self.split()
+		self.split()
 
 
 
@@ -37,8 +42,14 @@ class Data :
 		model.fit(X_train, y_train)
 		y_pred = model.predict(X_test)
 
-		for i in range(len(y_pred)) :
-			print(y_test.iloc[i,0],round(y_pred[i][0],2))
+		result = y_test.copy()
+		result["predicted"] = y_pred
+		result["diff"] = result.apply(lambda row: f"{round(abs(row['attrition'] - row['predicted']) * 100 / row['attrition'], 2):.2f}%", axis=1)
+
+		print("\n",result)
+
+		r2 = r2_score(y_test, y_pred)
+		print("\n\nR2 Score: ",round(r2,5),"\n")
 
 
 
@@ -58,7 +69,7 @@ class Data :
 		self.validate = shuffled[tr+tst:]
 
 		self.target = ["attrition"]
-		self.features = ["job","salary","tenure"]
+		self.features = ["noise","CEO","MGR","CMGR","SNRMGR","TSC","CONS","SNRTSC","SNRCONS","salary","tenure"]
 
 
 	def getTrainingData(self) :
