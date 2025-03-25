@@ -1,13 +1,20 @@
 import pandas as pd
 from sklearn.metrics import r2_score
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 
 
 class Data :
 	def __init__(self, path: str) :
 		self.load(path)
 		self.prepare()
+
+		X_test, ign = self.getTrainingData()
+		print("Data:")
+		print(X_test)
+
 		self.liniearRegression()
+		self.randomForest()
 
 
 
@@ -27,8 +34,9 @@ class Data :
 		self.df["tenure"] = (today - self.df["hire_date"]).dt.days / 365
 
 		for i,row in self.df.iterrows() :
+			noise = len(self.df.at[i,"first_name"]) + len(self.df.at[i,"last_name"])
 			self.df.at[i,row["job_id"]] = 1
-			self.df.at[i,"noise"] = 0*len(self.df.at[i,"first_name"])
+			self.df.at[i,"noise"] = 100*noise
 
 		self.split()
 
@@ -44,12 +52,42 @@ class Data :
 
 		result = y_test.copy()
 		result["predicted"] = y_pred
-		result["diff"] = result.apply(lambda row: f"{round(abs(row['attrition'] - row['predicted']) * 100 / row['attrition'], 2):.2f}%", axis=1)
+		result["diff"] = result.apply(lambda row: self.diff(row['attrition'],row['predicted']), axis=1)
 
+		print("\n\nLiniearRegression")
+		print("-------------------------------------------")
 		print("\n",result)
-
 		r2 = r2_score(y_test, y_pred)
-		print("\n\nR2 Score: ",round(r2,5),"\n")
+		print("\nR2 Score: ",round(r2,5),"\n")
+		print("-------------------------------------------")
+
+
+
+	def randomForest(self) :
+		X_test, y_test = self.getTestData()
+		X_train, y_train = self.getTrainingData()
+
+		model = RandomForestRegressor(n_estimators=1000, random_state=42)
+		model.fit(X_train, y_train.values.ravel())
+		y_pred = model.predict(X_test)
+
+		result = y_test.copy()
+		result["predicted"] = y_pred
+		result["diff"] = result.apply(lambda row: self.diff(row['attrition'],row['predicted']), axis=1)
+
+		print("\n\nRandomForest estimators=1000")
+		print("-------------------------------------------")
+		print("\n",result)
+		r2 = r2_score(y_test, y_pred)
+		print("\nR2 Score: ",round(r2,5),"\n")
+		print("-------------------------------------------")
+
+
+	def diff(self,rv,ev) :
+		diff = abs(rv - ev) * 100 / rv
+		result = f"{diff:.2f}%"
+		if (diff > 5) : result = "* " + result
+		return result
 
 
 
