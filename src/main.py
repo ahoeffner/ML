@@ -4,6 +4,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
 
+NOISE = 1000
+
+
 class Data :
 	def __init__(self, path: str) :
 		self.load(path)
@@ -36,7 +39,7 @@ class Data :
 		for i,row in self.df.iterrows() :
 			noise = len(self.df.at[i,"first_name"]) + len(self.df.at[i,"last_name"])
 			self.df.at[i,row["job_id"]] = 1
-			self.df.at[i,"noise"] = 100*noise
+			self.df.at[i,"noise"] = NOISE*noise
 
 		self.split()
 
