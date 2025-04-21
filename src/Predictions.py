@@ -4,9 +4,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
 
-NOISE = 1000
-
-
 class Predictions :
 	def __init__(self, path: str) :
 		self.load(path)
@@ -34,12 +31,10 @@ class Predictions :
 		self.df["SNRTSC"] = 0
 		self.df["SNRCONS"] = 0
 
-		self.df["tenure"] = (today - self.df["hire_date"]).dt.days / 365
+		self.df["TENURE"] = (today - self.df["hire_date"]).dt.days / 365
 
 		for i,row in self.df.iterrows() :
-			noise = len(self.df.at[i,"first_name"]) + len(self.df.at[i,"last_name"])
 			self.df.at[i,row["job_id"]] = 1
-			self.df.at[i,"noise"] = NOISE*noise
 
 		self.split()
 
@@ -96,6 +91,7 @@ class Predictions :
 
 	def load(self,path:str) :
 		self.df = pd.read_csv(path,parse_dates=["hire_date"])
+		self.df = self.df.rename(columns={"salary": "SALARY"})
 
 
 	def split(self) :
@@ -110,7 +106,7 @@ class Predictions :
 		self.validate = shuffled[tr+tst:]
 
 		self.target = ["attrition"]
-		self.features = ["noise","CEO","MGR","CMGR","SNRMGR","TSC","CONS","SNRTSC","SNRCONS","salary","tenure"]
+		self.features = ["CEO","MGR","CMGR","SNRMGR","TSC","CONS","SNRTSC","SNRCONS","TENURE","SALARY"]
 
 
 	def getTrainingData(self) :
