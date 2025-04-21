@@ -7,7 +7,7 @@ from sklearn.ensemble import RandomForestRegressor
 NOISE = 1000
 
 
-class Data :
+class Predictions :
 	def __init__(self, path: str) :
 		self.load(path)
 		self.prepare()
@@ -125,5 +125,5 @@ class Data :
 		return self.validate[self.features], self.validate[self.target]
 
 
-
-data = Data("/Users/alhof/Repository/GenAI/bronze/attrition.csv")
+if __name__ == "__main__":
+	data = Predictions("/Users/alhof/Repository/GenAI/bronze/attrition.csv")
