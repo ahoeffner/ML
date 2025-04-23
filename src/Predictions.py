@@ -6,16 +6,29 @@ from sklearn.ensemble import RandomForestRegressor
 
 class Predictions :
 	def __init__(self, path: str) :
-		self.load(path)
-		self.prepare()
+		if (path) :
+			self.load(path)
+			self.prepare()
 
+			X_test, ign = self.getTrainingData()
+			print("Data:")
+			print(X_test)
+
+			self.liniearRegression()
+			self.randomForest()
+
+
+	def predict(self,df:pd.DataFrame) :
+		self.df = df
+		df['hire_date'] = pd.to_datetime(df['hire_date'])
+		self.df = self.df.rename(columns={"salary": "SALARY"})
+		self.prepare()
 		X_test, ign = self.getTrainingData()
 		print("Data:")
 		print(X_test)
 
 		self.liniearRegression()
 		self.randomForest()
-
 
 
 	def prepare(self) :
