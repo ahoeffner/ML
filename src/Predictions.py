@@ -79,9 +79,9 @@ class Predictions :
 		print(f"\n\n{model} Predictions")
 		print("-------------------------------------------")
 		result = facts.copy()
-		result = result.rename(columns={"attrition": "actual"})
-		result["predicted"] = predicted
-		result["diff"] = result.apply(lambda row: self.diff(row['actual'],row['predicted']), axis=1)
+		result = result.rename(columns={"attrition": "ACTUAL"})
+		result["PREDICTED"] = predicted
+		result["DIFF"] = result.apply(lambda row: self.diff(row['ACTUAL'],row['PREDICTED']), axis=1)
 		print(result)
 		print("R2 Score: ", r2_score(facts, predicted), "\n")
 
