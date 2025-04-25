@@ -1,4 +1,6 @@
+import joblib
 import pandas as pd
+from numpy import ndarray
 from sklearn.metrics import r2_score
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
@@ -10,12 +12,29 @@ class Predictions :
 			self.load(path)
 			self.prepare()
 
-			X_test, ign = self.getTrainingData()
-			print("Data:")
-			print(X_test)
+			X_val, Y_val = self.getValidationData()
+			X_train, Y_train = self.getTrainingData()
 
-			self.liniearRegression()
-			self.randomForest()
+			print(f"\n\nTraining Data:\n\n{X_train}\n\n")
+
+			lr = LiniearRegression()
+			lr.train(X_train, Y_train)
+			lr.save("LiniearRegression.model")
+			lr.load("LiniearRegression.model")
+
+			pred = lr.predict(X_val)
+			self.print("LiniearRegression", Y_val, pred)
+
+			print("\n")
+
+			rf = RandomForest()
+			rf.train(X_train, Y_train)
+			rf.save("RandomForest.model")
+			rf.load("RandomForest.model")
+
+			pred = rf.predict(X_val)
+			self.print("RandomForest", Y_val, pred)
+
 
 
 	def predict(self,df:pd.DataFrame) :
@@ -26,9 +45,6 @@ class Predictions :
 		X_test, ign = self.getTrainingData()
 		print("Data:")
 		print(X_test)
-
-		self.liniearRegression()
-		self.randomForest()
 
 
 	def prepare(self) :
@@ -52,54 +68,22 @@ class Predictions :
 		self.split()
 
 
-
-	def liniearRegression(self) :
-		X_test, y_test = self.getTestData()
-		X_train, y_train = self.getTrainingData()
-
-		model = LinearRegression()
-		model.fit(X_train, y_train)
-		y_pred = model.predict(X_test)
-
-		result = y_test.copy()
-		result["predicted"] = y_pred
-		result["diff"] = result.apply(lambda row: self.diff(row['attrition'],row['predicted']), axis=1)
-
-		print("\n\nLiniearRegression")
-		print("-------------------------------------------")
-		print("\n",result)
-		r2 = r2_score(y_test, y_pred)
-		print("\nR2 Score: ",round(r2,5),"\n")
-		print("-------------------------------------------")
-
-
-
-	def randomForest(self) :
-		X_test, y_test = self.getTestData()
-		X_train, y_train = self.getTrainingData()
-
-		model = RandomForestRegressor(n_estimators=1000, random_state=42)
-		model.fit(X_train, y_train.values.ravel())
-		y_pred = model.predict(X_test)
-
-		result = y_test.copy()
-		result["predicted"] = y_pred
-		result["diff"] = result.apply(lambda row: self.diff(row['attrition'],row['predicted']), axis=1)
-
-		print("\n\nRandomForest estimators=1000")
-		print("-------------------------------------------")
-		print("\n",result)
-		r2 = r2_score(y_test, y_pred)
-		print("\nR2 Score: ",round(r2,5),"\n")
-		print("-------------------------------------------")
-
-
 	def diff(self,rv,ev) :
 		diff = abs(rv - ev) * 100 / rv
 		result = f"{diff:.2f}%"
 		if (diff > 5) : result = "* " + result
 		return result
 
+
+	def print(self, model:str, facts:pd.DataFrame, predicted:ndarray) :
+		print(f"\n\n{model} Predictions")
+		print("-------------------------------------------")
+		result = facts.copy()
+		result = result.rename(columns={"attrition": "actual"})
+		result["predicted"] = predicted
+		result["diff"] = result.apply(lambda row: self.diff(row['actual'],row['predicted']), axis=1)
+		print(result)
+		print("R2 Score: ", r2_score(facts, predicted), "\n")
 
 
 	def load(self,path:str) :
@@ -132,6 +116,45 @@ class Predictions :
 
 	def getValidationData(self) :
 		return self.validate[self.features], self.validate[self.target]
+
+
+class RandomForest :
+	def train(self, X_train:pd.DataFrame, Y_train:pd.DataFrame) :
+		self.model = RandomForestRegressor(n_estimators=1000, random_state=42)
+		self.model.fit(X_train, Y_train.values.ravel())
+		print("RandomForest trained")
+
+	def save(self, path:str) :
+		joblib.dump(self.model, path)
+		print("RandomForest Model saved to: ",path)
+
+	def load(self, path:str) :
+		self.model = joblib.load(path)
+		print("RandomForest Model loaded from: ",path)
+
+	def predict(self, df:pd.DataFrame) :
+		return self.model.predict(df)
+
+
+
+class LiniearRegression :
+	def train(self, X_train:pd.DataFrame, Y_train:pd.DataFrame) :
+		self.model = LinearRegression()
+		self.model.fit(X_train, Y_train)
+		print("LiniearRegression fitted")
+
+
+	def save(self, path:str) :
+		joblib.dump(self.model, path)
+		print("LiniearRegression Model saved to: ",path)
+
+	def load(self, path:str) :
+		self.model = joblib.load(path)
+		print("LiniearRegression Model loaded from: ",path)
+
+	def predict(self, df:pd.DataFrame) :
+		return self.model.predict(df)
+
 
 
 if __name__ == "__main__":
