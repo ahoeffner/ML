@@ -42,7 +42,7 @@ class Predictions :
 
 
 
-	def predict(self) :
+	def validate(self) :
 		X_val, Y_val = self.getValidationData()
 
 		pred = self.lr.predict(X_val)
@@ -114,7 +114,7 @@ class Predictions :
 
 		self.data = shuffled[:tr]
 		self.test = shuffled[tr:tr+tst]
-		self.validate = shuffled[tr+tst:]
+		self.fact = shuffled[tr+tst:]
 
 		self.target = ["attrition"]
 		self.features = ["CEO","MGR","CMGR","SNRMGR","TSC","CONS","SNRTSC","SNRCONS","TENURE","SALARY"]
@@ -130,7 +130,7 @@ class Predictions :
 
 
 	def getValidationData(self) :
-		return self.validate[self.features], self.validate[self.target]
+		return self.fact[self.features], self.fact[self.target]
 
 
 
@@ -184,4 +184,4 @@ if __name__ == "__main__" :
 	#df = df.rename(columns={"salary": "SALARY"})
 
 	predictions.train(data=df)
-	predictions.predict()
+	predictions.validate()
