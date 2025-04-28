@@ -7,6 +7,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 
 class Predictions :
+	RFMODEL = "RandomForest.model"
+	LRMODEL = "LiniearRegression.model"
+
 	def __init__(self, path: str) :
 		if (path) :
 			self.load(path)
@@ -19,8 +22,8 @@ class Predictions :
 
 			lr = LiniearRegression()
 			lr.train(X_train, Y_train)
-			lr.save("LiniearRegression.model")
-			lr.load("LiniearRegression.model")
+			lr.save(Predictions.LRMODEL)
+			lr.load(Predictions.LRMODEL)
 
 			pred = lr.predict(X_val)
 			self.print("LiniearRegression", Y_val, pred)
@@ -29,11 +32,41 @@ class Predictions :
 
 			rf = RandomForest()
 			rf.train(X_train, Y_train)
-			rf.save("RandomForest.model")
-			rf.load("RandomForest.model")
+			rf.save(Predictions.RFMODEL)
+			rf.load(Predictions.RFMODEL)
 
 			pred = rf.predict(X_val)
 			self.print("RandomForest", Y_val, pred)
+
+
+	def train(self, path:str = None, data:pd.DataFrame = None) :
+		self.df = None
+
+		if (path is not None) :
+			self.load(path)
+
+		elif (data is not None) :
+			df:pd.DataFrame = data
+			df['hire_date'] = pd.to_datetime(df['hire_date'])
+			self.df = df.rename(columns={"salary": "SALARY"})
+
+		else :
+			print("Invalid data type")
+			return
+
+
+		self.prepare()
+		X_train, Y_train = self.getTrainingData()
+
+		print(f"\n\nTraining Data:\n\n{X_train}\n\n")
+
+		lr = LiniearRegression()
+		lr.train(X_train, Y_train)
+
+		rf = RandomForest()
+		rf.train(X_train, Y_train)
+
+		print("Models trained")
 
 
 
@@ -97,8 +130,7 @@ class Predictions :
 		tr = int(len(shuffled) * 0.8)
 		tst = int((len(shuffled) - tr)/2)
 
-		self.train = shuffled[:tr]
-
+		self.data = shuffled[:tr]
 		self.test = shuffled[tr:tr+tst]
 		self.validate = shuffled[tr+tst:]
 
@@ -107,7 +139,7 @@ class Predictions :
 
 
 	def getTrainingData(self) :
-		return self.train[self.features], self.train[self.target]
+		return self.data[self.features], self.data[self.target]
 
 
 	def getTestData(self) :
@@ -157,5 +189,13 @@ class LiniearRegression :
 
 
 
-if __name__ == "__main__":
-	data = Predictions("/Users/alhof/Repository/GenAI/bronze/attrition.csv")
+if __name__ == "__main__" :
+	path = "/Users/alhof/Repository/GenAI/bronze/attrition.csv"
+
+	predictions = Predictions(None)
+	predictions.train(path=path)
+
+	df = pd.read_csv(path,parse_dates=["hire_date"])
+	df = df.rename(columns={"salary": "SALARY"})
+
+	predictions.train(data=df)
