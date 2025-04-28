@@ -10,34 +10,6 @@ class Predictions :
 	RFMODEL = "RandomForest.model"
 	LRMODEL = "LiniearRegression.model"
 
-	def __init__(self, path: str) :
-		if (path) :
-			self.load(path)
-			self.prepare()
-
-			X_val, Y_val = self.getValidationData()
-			X_train, Y_train = self.getTrainingData()
-
-			print(f"\n\nTraining Data:\n\n{X_train}\n\n")
-
-			lr = LiniearRegression()
-			lr.train(X_train, Y_train)
-			lr.save(Predictions.LRMODEL)
-			lr.load(Predictions.LRMODEL)
-
-			pred = lr.predict(X_val)
-			self.print("LiniearRegression", Y_val, pred)
-
-			print("\n")
-
-			rf = RandomForest()
-			rf.train(X_train, Y_train)
-			rf.save(Predictions.RFMODEL)
-			rf.load(Predictions.RFMODEL)
-
-			pred = rf.predict(X_val)
-			self.print("RandomForest", Y_val, pred)
-
 
 	def train(self, path:str = None, data:pd.DataFrame = None) :
 		self.df = None
@@ -47,8 +19,8 @@ class Predictions :
 
 		elif (data is not None) :
 			df:pd.DataFrame = data
-			df['hire_date'] = pd.to_datetime(df['hire_date'])
-			self.df = df.rename(columns={"salary": "SALARY"})
+			self.df = self.rename(df)
+			self.df['HIRE_DATE'] = pd.to_datetime(self.df['HIRE_DATE'])
 
 		else :
 			print("Invalid data type")
@@ -60,24 +32,31 @@ class Predictions :
 
 		print(f"\n\nTraining Data:\n\n{X_train}\n\n")
 
-		lr = LiniearRegression()
-		lr.train(X_train, Y_train)
+		self.lr = LiniearRegression()
+		self.lr.train(X_train, Y_train)
 
-		rf = RandomForest()
-		rf.train(X_train, Y_train)
+		self.rf = RandomForest()
+		self.rf.train(X_train, Y_train)
 
 		print("Models trained")
 
 
 
-	def predict(self,df:pd.DataFrame) :
-		self.df = df
-		df['hire_date'] = pd.to_datetime(df['hire_date'])
-		self.df = self.df.rename(columns={"salary": "SALARY"})
-		self.prepare()
-		X_test, ign = self.getTrainingData()
-		print("Data:")
-		print(X_test)
+	def predict(self) :
+		X_val, Y_val = self.getValidationData()
+
+		pred = self.lr.predict(X_val)
+		self.print("LiniearRegression", Y_val, pred)
+
+		pred = self.rf.predict(X_val)
+		self.print("RandomForest", Y_val, pred)
+
+
+
+	def rename(self, df:pd.DataFrame) :
+		df = df.rename(columns={"salary": "SALARY", "hire_date": "HIRE_DATE"})
+		return df
+
 
 
 	def prepare(self) :
@@ -93,7 +72,8 @@ class Predictions :
 		self.df["SNRTSC"] = 0
 		self.df["SNRCONS"] = 0
 
-		self.df["TENURE"] = (today - self.df["hire_date"]).dt.days / 365
+		self.rename(self.df)
+		self.df["TENURE"] = (today - self.df["HIRE_DATE"]).dt.days / 365
 
 		for i,row in self.df.iterrows() :
 			self.df.at[i,row["job_id"]] = 1
@@ -101,11 +81,13 @@ class Predictions :
 		self.split()
 
 
+
 	def diff(self,rv,ev) :
 		diff = abs(rv - ev) * 100 / rv
 		result = f"{diff:.2f}%"
 		if (diff > 5) : result = "* " + result
 		return result
+
 
 
 	def print(self, model:str, facts:pd.DataFrame, predicted:ndarray) :
@@ -121,7 +103,7 @@ class Predictions :
 
 	def load(self,path:str) :
 		self.df = pd.read_csv(path,parse_dates=["hire_date"])
-		self.df = self.df.rename(columns={"salary": "SALARY"})
+		self.df = self.df.rename(columns={"salary": "SALARY", "hire_date": "HIRE_DATE"})
 
 
 	def split(self) :
@@ -138,6 +120,7 @@ class Predictions :
 		self.features = ["CEO","MGR","CMGR","SNRMGR","TSC","CONS","SNRTSC","SNRCONS","TENURE","SALARY"]
 
 
+
 	def getTrainingData(self) :
 		return self.data[self.features], self.data[self.target]
 
@@ -148,6 +131,8 @@ class Predictions :
 
 	def getValidationData(self) :
 		return self.validate[self.features], self.validate[self.target]
+
+
 
 
 class RandomForest :
@@ -192,10 +177,11 @@ class LiniearRegression :
 if __name__ == "__main__" :
 	path = "/Users/alhof/Repository/GenAI/bronze/attrition.csv"
 
-	predictions = Predictions(None)
-	predictions.train(path=path)
+	predictions = Predictions()
+	#predictions.train(path=path)
 
-	df = pd.read_csv(path,parse_dates=["hire_date"])
-	df = df.rename(columns={"salary": "SALARY"})
+	df = pd.read_csv(path)
+	#df = df.rename(columns={"salary": "SALARY"})
 
 	predictions.train(data=df)
+	predictions.predict()
