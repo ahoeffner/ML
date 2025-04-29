@@ -1,10 +1,10 @@
 import joblib
 import pandas as pd
 from numpy import ndarray
+from Plotter import Plotter
 from sklearn.metrics import r2_score
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
-
 
 class Predictions :
 	RFMODEL = "RandomForest.model"
@@ -42,14 +42,16 @@ class Predictions :
 
 
 
-	def validate(self) :
+	def validate(self,model:str) :
 		X_val, Y_val = self.getValidationData()
 
-		pred = self.lr.predict(X_val)
-		self.print("LiniearRegression", Y_val, pred)
+		if (model == "LiniearRegression") :
+			pred = self.lr.predict(X_val)
+			self.print("LiniearRegression", Y_val, pred)
 
-		pred = self.rf.predict(X_val)
-		self.print("RandomForest", Y_val, pred)
+		elif (model == "RandomForest") :
+			pred = self.rf.predict(X_val)
+			self.print("RandomForest", Y_val, pred)
 
 
 
@@ -91,6 +93,9 @@ class Predictions :
 
 
 	def print(self, model:str, facts:pd.DataFrame, predicted:ndarray) :
+		plotter = Plotter()
+		plotter.scatter_plot(predicted, facts, "Actuals vs Predicted", "Actual", "Predicted")
+		return
 		print(f"\n\n{model} Predictions")
 		print("-------------------------------------------")
 		result = facts.copy()
