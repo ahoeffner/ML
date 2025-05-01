@@ -95,7 +95,7 @@ class Predictions :
 	def print(self, model:str, facts:pd.DataFrame, predicted:ndarray) :
 		plotter = Plotter()
 		plotter.scatter_plot(predicted, facts, "Actuals vs Predicted", "Actual", "Predicted")
-		return
+
 		print(f"\n\n{model} Predictions")
 		print("-------------------------------------------")
 		result = facts.copy()
