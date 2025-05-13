@@ -1,4 +1,5 @@
 import joblib
+from Neural import Neural
 import pandas as pd
 from numpy import ndarray
 from Plotter import Plotter
@@ -9,6 +10,11 @@ from sklearn.ensemble import RandomForestRegressor
 class Predictions :
 	RFMODEL = "RandomForest.model"
 	LRMODEL = "LiniearRegression.model"
+
+
+	def test(self) :
+		self.nn.save("NeuralNetwork.model")
+		self.nn.load("NeuralNetwork.model")
 
 
 	def train(self, path:str = None, data:pd.DataFrame = None) :
@@ -38,6 +44,10 @@ class Predictions :
 		self.rf = RandomForest()
 		self.rf.train(X_train, Y_train)
 
+		print("Train Neural Network")
+		self.nn = Neural(input_size=len(X_train.columns), hidden_size=16, output_size=1)
+		self.nn.train(X_train, Y_train)
+
 		print("Models trained")
 
 
@@ -52,6 +62,10 @@ class Predictions :
 		elif (model == "RandomForest") :
 			pred = self.rf.predict(X_val)
 			self.print("RandomForest", Y_val, pred)
+
+		elif (model == "NeuralNetwork") :
+			pred = self.nn.predict(X_val)
+			self.print("NeuralNetwork", Y_val, pred)
 
 
 
@@ -154,7 +168,7 @@ class RandomForest :
 		self.model = joblib.load(path)
 		print("RandomForest Model loaded from: ",path)
 
-	def predict(self, df:pd.DataFrame) :
+	def predict(self, df:pd.DataFrame) -> ndarray :
 		return self.model.predict(df)
 
 
