@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
-from neural.NNModel import NNModel
-from neural.NNTrainer import NNTrainer
+from NNModel import NNModel
+from NNTrainer import NNTrainer
 
 
 class Neural:
